@@ -1,8 +1,10 @@
 ---
 title: "Models"
 author: "Alfonso Rojas-Alvarez"
-date: "9/28/2018"
-output: pdf_document
+date: "10/14/2022"
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -18,7 +20,7 @@ library(foreign)
 library(stargazer)
 
 ### Set the working directory
-setwd("/Users/Alfonso/Google Drive/UT/Fall 2018/R Workshop")
+setwd("/Users/ajr3347/r_workshop")
 
 ### For this function, read.delim, we will need to load the foreign package.
 wages <- read.delim("urbup.dat", sep = "")
@@ -80,26 +82,20 @@ summary(model4)
 Fixed Effects:
 
 ```{r}
-# model5 <- plm(wage ~ educ + faed + female, data = wages, index = c("state", "year"), model = "within", effect= "individual")
+library(plm)
+#model5 <- plm(wage ~ educ + faed + female, data = wages, index = c("state", "year"), model = "within", effect= "individual")
 # summary(model5)
-
-### I am not running this one since something went wrong with my R version and it is not reading plm
 ```
 
 Propensity Score Matching:
 
 ```{r}
 #model6  = matchit(y ~ x1 + x2 + x3, data = data, method = "nearest", ratio = 1)
-# summary(model6)
-
-# Same problem as before
+#summary(model6)
 ```
 
-```{r}
-stargazer(model1, model2, model3, model4)
-
-### This will shoot out a chunk of code.
-### Copy and paste it into a latex file to get a pretty table!
+```{r echo=TRUE}
+stargazer(model1, model2, model3, model4, type = 'html')
 ```
 
 
@@ -107,7 +103,16 @@ Monte Carlo Simulation:
 
 ```{r}
 ### Generate a distribution
-mcsim <- rnorm(50, mean = 0, sd = 1)
+mcsim <- data.frame(values = rnorm(5000, mean = 10, sd = 6))
+mcsim %>% ggplot(aes(values)) + 
+  geom_histogram(aes(values), 
+                 fill="blue", 
+                 alpha = .5, bins = 50) + 
+  #geom_density(aes(y=..count..), color = "black") +
+  labs(x = "Simulated Values", y = "Count", 
+       title = "R Workshop, October 14, 2022",
+       caption = "by: Alfonso Rojas-Alvarez") +
+  theme_bw()
 ```
 
 To Bootstrap a MC Simulation:
@@ -124,21 +129,19 @@ y <- data.frame((sapply(1:50000, rep)))
 
 ### Plot it!
 
-a <- ggplot(data=y, aes(y$X.sapply.1.50000..rep..)) + 
+y %>% ggplot(aes(X.sapply.1.50000..rep..)) + 
   geom_histogram(aes(y =..density..), 
                  fill="red", 
-                 alpha = .5) + 
-  geom_density(col=2) + 
+                 alpha = .5, bins = 30) + 
+  geom_density(col=4) + 
   labs(x="Whatever you simulated in the X axis", y="Proportion of Replications" )
-
-a
 ```
 
 Quantiles:
 
 ```{r}
 q <- c(0.025, 0.975)
-quantile <- quantile(mcsim, probs = q)
+quantile <- quantile(mcsim$values, probs = q)
 quantile
 ```
 
@@ -172,7 +175,7 @@ predicted <- predict(model1)
 frame <- data.frame(cbind(predicted, wages$wage))
 
 ### Create the plot
-plot2 <- ggplot(data=frame, aes(frame$predicted, frame$V2)) + 
+plot2 <- ggplot(dat=frame, aes(predicted, frame$V2)) + 
   geom_point() + 
   labs(x="Predicted", y="Observed" )
 plot2

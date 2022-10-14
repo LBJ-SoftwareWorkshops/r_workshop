@@ -17,7 +17,7 @@ library(ggplot2)
 library(foreign)
 
 ### Set the working directory
-setwd("/Users/Alfonso/Google Drive/UT/Fall 2018/R Workshop")
+setwd("/Users/ajr3347/r_workshop")
 ```
 
 ## Data Cleaning
