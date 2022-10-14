@@ -1,0 +1,180 @@
+---
+title: "Models"
+author: "Alfonso Rojas-Alvarez"
+date: "9/28/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+### This function will clean up your environment
+rm(list = ls())
+
+### Load the packages you will need for your work (you can also do this as you go).
+library(dplyr)
+library(ggplot2)
+library(foreign)
+library(stargazer)
+
+### Set the working directory
+setwd("/Users/Alfonso/Google Drive/UT/Fall 2018/R Workshop")
+
+### For this function, read.delim, we will need to load the foreign package.
+wages <- read.delim("urbup.dat", sep = "")
+
+### Give the variables names (some data sets already have them, check first)
+names(wages) <- c("wage", "educ", "female", "faed")
+```
+
+Note: these models are not necessarily the best or most suited for this particular data set. The data set is used merely for illustrative purposes. Remember there must be a theoretical or methodological justification to use one model or another.
+
+Basic OLS:
+
+```{r}
+### Create the regression object
+model1 <- lm(wage ~ female + educ + faed, data = wages)
+
+### Summarize to view the results
+summary(model1)
+```
+
+No constant:
+
+```{r}
+model2 <- lm(wage ~ female + educ + faed - 1, data = wages)
+summary(model2)
+```
+
+Test Normality:
+
+```{r}
+### A q-q normal plot compares the results of the 
+### ols with a theoretical standard normal distribution
+qqnorm(wages$educ)
+```
+
+Confidence Interval:
+
+```{r}
+confint(model1)
+```
+
+GLM:
+
+```{r}
+### For a GLM, change the link function 'family'
+model3 <- glm(female ~ educ + wage + faed, data=wages, family = binomial(link = "logit"))
+summary(model3)
+```
+
+Difference in differences:
+
+```{r}
+### Difference in Difference is basically just a simple OLs
+### What changes is how you code the variables
+model4 <- lm(formula = wage ~ female * faed, data = wages)
+summary(model4)
+```
+
+Fixed Effects:
+
+```{r}
+# model5 <- plm(wage ~ educ + faed + female, data = wages, index = c("state", "year"), model = "within", effect= "individual")
+# summary(model5)
+
+### I am not running this one since something went wrong with my R version and it is not reading plm
+```
+
+Propensity Score Matching:
+
+```{r}
+#model6  = matchit(y ~ x1 + x2 + x3, data = data, method = "nearest", ratio = 1)
+# summary(model6)
+
+# Same problem as before
+```
+
+```{r}
+stargazer(model1, model2, model3, model4)
+
+### This will shoot out a chunk of code.
+### Copy and paste it into a latex file to get a pretty table!
+```
+
+
+Monte Carlo Simulation:
+
+```{r}
+### Generate a distribution
+mcsim <- rnorm(50, mean = 0, sd = 1)
+```
+
+To Bootstrap a MC Simulation:
+
+```{r}
+### Create a function to generate a distribution
+rep <- function(i) {
+  a <- rbinom(size = 1, n = 720, p = 0.2166)
+  mean(a)
+}
+
+### Replicate the function 50000 times!
+y <- data.frame((sapply(1:50000, rep)))
+
+### Plot it!
+
+a <- ggplot(data=y, aes(y$X.sapply.1.50000..rep..)) + 
+  geom_histogram(aes(y =..density..), 
+                 fill="red", 
+                 alpha = .5) + 
+  geom_density(col=2) + 
+  labs(x="Whatever you simulated in the X axis", y="Proportion of Replications" )
+
+a
+```
+
+Quantiles:
+
+```{r}
+q <- c(0.025, 0.975)
+quantile <- quantile(mcsim, probs = q)
+quantile
+```
+
+T-tests:
+
+```{r}
+t.test(wages$wage~wages$female) # where y is numeric and x is a binary factor
+t.test(wages$wage,wages$educ) # where y1 and y2 are numeric
+t.test(wages$wage,wages$educ,paired=TRUE) # where y1 & y2 are numeric
+t.test(wages$wage,mu=3) # Ho: mu=3
+```
+
+Predict from models:
+
+```{r}
+male = c(16, 0, 10)
+female = c(16, 1, 10)
+newdata <- data.frame(rbind(male, female))
+names(newdata)[1]<-paste("educ")
+names(newdata)[2]<-paste("female")
+names(newdata)[3]<-paste("faed")
+
+### Two specific cases
+predict(model1, newdata=newdata)
+
+### Or predict the entire X axis
+
+predicted <- predict(model1)
+
+### To plot them, create a data frame
+frame <- data.frame(cbind(predicted, wages$wage))
+
+### Create the plot
+plot2 <- ggplot(data=frame, aes(frame$predicted, frame$V2)) + 
+  geom_point() + 
+  labs(x="Predicted", y="Observed" )
+plot2
+```
+

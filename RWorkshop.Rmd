@@ -1,0 +1,46 @@
+---
+title: "R Workshop for Policy Students"
+author: "Noorah Alhasan & Alfonso Rojas-Alvarez"
+date: "September 20, 2018"
+output:
+  pdf_document:
+    highlight: pygments
+  html_document:
+    df_print: paged
+---
+## Installing and loading packages
+
+
+## Loading datasets
+```{r eval=FALSE, include=TRUE}
+library(foreign); library(readstata13)
+#"foreign" loads both .dta and .csv files; "readstata13" uses old version of Stata's .dta files
+
+dataset1 <- read.csv("/Users/Kanye/YE/Dark_Fantasy/get_much_higher.csv", header = TRUE)
+#"header = TRUE" tells R that the first row in CSV is the column names
+
+dataset2 <- read.dta("/Users/Kanye/YE/Dark_Fantasy/get_much_higher.dta")
+```
+
+## Manipulating Datasets
+```{r eval=FALSE, include=TRUE}
+dflong <- melt(df, id = INDIVIDUAL_IDENTIFIER)
+
+dflong <- reshape(dfwide, varying = c("test_0","test_1"), direction = "long", idvar = "id", sep = "_", timevar = "post")
+```
+
+## Variable Types
+```{r eval=FALSE, include=TRUE}
+dataset1$kim <- as.factor(dataset1$kim)
+#If the 'kim' variable in dataset1 was loaded as numeric when in fact it's a factor variable, then we need to ensure that R sees it as factor.
+```
+
+
+## Contingency Tables
+
+```{r eval=FALSE, include=TRUE}
+ftable(xtabs(data=schdrug, cbind(black,asian,m_level2,m_level3,m_intent)~groups))
+
+t.test(schdrug$m_level2~schdrug$hec_)
+```
+

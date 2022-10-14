@@ -1,0 +1,141 @@
+---
+title: "Data Cleaning"
+author: "Alfonso Rojas-Alvarez"
+date: "9/26/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+### This function will clean up your environment
+rm(list = ls())
+
+### Load the packages you will need for your work (you can also do this as you go).
+library(dplyr)
+library(ggplot2)
+library(foreign)
+
+### Set the working directory
+setwd("/Users/Alfonso/Google Drive/UT/Fall 2018/R Workshop")
+```
+
+## Data Cleaning
+
+Let's go over a set of functions that will help you clean data very effectively, and ease the transition from R into Stata. First, let's load our data:
+
+```{r, echo = TRUE}
+### For this function, read.delim, we will need to load the foreign package.
+wages <- read.delim("urbup.dat", sep = "")
+
+### Give the variables names (some data sets already have them, check first)
+names(wages) <- c("wage", "educ", "female", "faed")
+```
+
+## Filter
+
+The filter() function allows you to subset rows in your data based on a condition. You can either do this as a separate object, or entirely replace your original data set.
+
+Here, let's first filter female observations:
+
+```{r, echo=TRUE}
+
+### In a new object (notice it carries the variables names, nice!)
+female_w <- filter(wages, female == 1)
+
+### Replace the one you had before
+wages <- filter(wages, female == 1)
+
+### But that's not always very helpful, since you 
+### want the original data set to be available. Let's load it again:
+wages <- read.delim("urbup.dat", sep = "")
+names(wages) <- c("wage", "educ", "female", "faed")
+```
+
+Let's now filter with two conditions, use the & or the | operators for 'and' and 'or' conditions.
+
+```{r, echo=TRUE}
+
+### Let's filter males with low education
+males_lowed <- filter(wages, female == 0 & educ < 15)
+
+### Say don't want that object in the environment anymore. 
+### To delete an object:
+rm(males_lowed)
+```
+
+Plot wages:
+
+```{r, echo=TRUE}
+
+### Ask R to treat female variable as a factor 
+### Factor: 0 or 1, rather than any decimal number from 0 to 1.
+wages$female <- factor(wages$female)
+plot1 <- ggplot(data = wages, aes(wage, educ, color=female)) + geom_point() +
+  labs(x="Wages", y="Years of Education") + ggtitle("Plot of Wages by Education Level")
+plot1
+```
+
+## Select
+
+The select() function allows you to subset columns of your data. This is helpful if you want to remove a group of columns when you have a wide array or variables.
+
+```{r, echo=TRUE}
+
+### Select just two variables from the data set
+faed_wage <- select(wages, wage, faed)
+
+### You can also remove variables
+fem_educ <- select(wages, -wage, -faed)
+```
+
+## Mutate
+
+The function mutate() allows you to create a new variable based on a function of an existing one:
+
+```{r}
+### Create a new variable that is the log of wages
+wages <- mutate(wages, logwage = log(wage))
+
+### Mutate stacks up!
+wages <- mutate(wages, logwage_summed = logwage + 123, logwage_summed2 = logwage_summed^2)
+```
+
+Let's remove those variables for now:
+
+```{r}
+wages$logwage <- NULL
+wages$logwage_summed <- NULL
+wages$logwage_summed2 <- NULL
+```
+
+## Arrange
+
+The function arrange() allows you to 'order' a data set based on a variable, in ascending or descending order.
+
+```{r}
+
+### Ascending order
+wages <- arrange(wages, faed)
+
+### Descending order
+wages <- arrange(wages, desc(faed))
+```
+
+## Summarize
+
+Very simple function to give you aggregates of the data frame, it becomes more powerful when combined with other functions.
+
+```{r}
+summarize(wages, mean(wage))
+```
+## Group By
+
+This function is the one that makes summarize powerful. You can group your data set by a variable, and then obtain summaries based on it:
+
+```{r}
+summarize(group_by(wages, faed), mean(wage))
+```
+The combination of these functions will allow you to do very powerful and elegant cleaning for your data sets. As always, practice makes the master!
+
+
